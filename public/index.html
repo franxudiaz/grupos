@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Grupos y Remolques</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <h1>Control de Mantenimiento</h1>
+        </header>
+
+        <!-- MAIN MENU VIEW -->
+        <div id="view-menu" class="view active">
+            <button class="btn btn-primary btn-large" onclick="startRevision()">Iniciar Revisión</button>
+            <button class="btn btn-secondary btn-large" onclick="downloadExcel()">Descargar Excel</button>
+        </div>
+
+        <!-- REVISION VIEW -->
+        <div id="view-revision" class="view hidden">
+            <div class="toolbar">
+                <button class="btn-small" onclick="showMenu()">← Menú</button>
+                <span id="progress-indicator">Completados: 0/0</span>
+            </div>
+
+            <div class="form-section">
+                <label for="vehicle-select">Seleccionar Vehículo:</label>
+                <select id="vehicle-select" onchange="loadVehicleForm()">
+                    <option value="">-- Seleccionar --</option>
+                </select>
+            </div>
+
+            <div id="form-container" class="form-container hidden">
+                <h3 id="form-title">Datos de Revisión</h3>
+                <form id="dynamic-form" onsubmit="handleFormSubmit(event)">
+                    <!-- Form fields injected here -->
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- COMPLETION MODAL -->
+    <div id="completion-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>¡Revisión Completada!</h2>
+            <p>Se han revisado todos los vehículos.</p>
+            <button class="btn btn-primary" onclick="closeModalAndReset()">Aceptar</button>
+        </div>
+    </div>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

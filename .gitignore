@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+venv/
+.env
+*.xlsx
+!NOVEDADES SEMANALES VEHICULOS SECCION SISTEMAS.xlsx
+node_modules/

@@ -24,8 +24,8 @@ body {
 .container {
     max-width: 600px;
     margin: 0 auto;
-    background: rgba(255, 255, 255, 0.85);
-    /* Transparency */
+    background: rgba(255, 255, 255, 0.6);
+    /* More transparent */
     backdrop-filter: blur(8px);
     /* Blur effect */
     padding: 20px;
@@ -123,15 +123,15 @@ header h2 {
     padding: 8px 16px;
     font-size: 14px;
     width: auto;
-    background: #4b5563;
-    /* modern dark grey */
+    background-color: var(--primary-color);
+    /* Blue like main buttons */
     color: white;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-small:hover {
-    background: #374151;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    background-color: var(--primary-hover);
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
 }
 
 /* Form Styles */

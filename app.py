@@ -55,6 +55,76 @@ def index():
 # I will do two separate edits to be safe.
 
 
+
+def check_if_completed_today(sheet_name):
+    """Checks if the last row of the sheet has today's date."""
+    try:
+        # We need to read the sheet to check the last row.
+        # Efficient way: openpyxl read only? or pandas reading tail?
+        # Let's use openpyxl since we use it for writing.
+        wb = load_workbook(FILE_PATH, read_only=True, data_only=True)
+        if sheet_name not in wb.sheetnames:
+            return False
+            
+        ws = wb[sheet_name]
+        max_row = ws.max_row
+        
+        if max_row <= 1: # Only header
+            return False
+            
+        # Find 'FECHA' column index. 
+        # Iterate first row
+        header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True))
+        fecha_col_idx = -1
+        
+        for idx, val in enumerate(header_row):
+            if val and 'FECHA' in str(val).upper():
+                fecha_col_idx = idx
+                break
+                
+        if fecha_col_idx == -1:
+            return False
+            
+        # Get value of last row at fecha_col_idx
+        # ws[max_row] in read_only might be tricky if not iterated.
+        # But we can assume accessing cell by coordinate works.
+        # Actually in read_only, random access is not supported?
+        # Standard load_workbook (not read_only) is safer for random access, given file size is likely small.
+        # Or just use pandas tail(1).
+        wb.close()
+        
+        # Pandas approach for robustness
+        df = pd.read_excel(FILE_PATH, sheet_name=sheet_name)
+        if df.empty:
+            return False
+            
+        # Check last row 'FECHA' column.
+        # Identify FECHA column again in pandas
+        fecha_col = None
+        for col in df.columns:
+            if 'FECHA' in col.upper():
+                fecha_col = col
+                break
+        
+        if not fecha_col:
+            return False
+            
+        last_val = df.iloc[-1][fecha_col]
+        # check if it matches today format d/m/Y
+        today_str = datetime.now().strftime('%d/%m/%Y')
+        
+        # last_val might be string or datetime object
+        if isinstance(last_val, datetime):
+            last_date_str = last_val.strftime('%d/%m/%Y')
+        else:
+            last_date_str = str(last_val).strip()
+            
+        return last_date_str == today_str
+        
+    except Exception as e:
+        print(f"Error checking completion for {sheet_name}: {e}")
+        return False
+
 @app.route('/api/config')
 def get_config():
     if not os.path.exists(FILE_PATH):
@@ -72,7 +142,9 @@ def get_config():
         df.columns = df.columns.str.strip()
         
         type_ = get_sheet_type(sheet, df)
-        config.append({"name": sheet, "type": type_})
+        is_completed = check_if_completed_today(sheet)
+        
+        config.append({"name": sheet, "type": type_, "completed": is_completed})
         
     return jsonify({"sheets": config})
 
@@ -176,7 +248,11 @@ def delete_last_row():
         if ws.max_row > 1: # Assuming header is row 1, don't delete header
             ws.delete_rows(ws.max_row)
             wb.save(FILE_PATH)
-            return jsonify({"success": True, "message": "Última fila eliminada"})
+            
+            # Check if still completed (maybe there was another entry from today?)
+            is_completed = check_if_completed_today(sheet_name)
+            
+            return jsonify({"success": True, "message": "Última fila eliminada", "completed": is_completed})
         else:
             return jsonify({"error": "No hay filas para borrar (solo cabecera)"}), 400
             

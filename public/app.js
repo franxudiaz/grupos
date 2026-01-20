@@ -13,8 +13,16 @@ async function loadConfig() {
         const data = await res.json();
 
         if (data.sheets) {
-            sheets = data.sheets; // [{name: 'G1', type: 'grupo'}, ...]
+            sheets = data.sheets; // [{name: 'G1', type: 'grupo', completed: true/false}, ...]
+
+            // Pre-fill completedSheets from server data
+            completedSheets.clear();
+            sheets.forEach(s => {
+                if (s.completed) completedSheets.add(s.name);
+            });
+
             populateSelect();
+            updateProgress();
         }
     } catch (e) {
         console.error("Error loading config:", e);
@@ -24,8 +32,11 @@ async function loadConfig() {
 
 // --- NAVIGATION ---
 function startRevision() {
-    completedSheets.clear(); // Start fresh session? Or persist? User said "automaticamente añade... cuando haya rellenado todos... popup"
-    // Assuming session reset on "Iniciar Revision"
+    // completedSheets logic is now handled by server/loadConfig updates. 
+    // We shouldn't clear it here blindly if we want persistent day-state.
+    // If anything, we could re-fetch config to be sure.
+    loadConfig();
+
     updateProgress();
 
     document.getElementById('view-menu').classList.add('hidden');
@@ -60,15 +71,24 @@ function updateProgress() {
 // --- FORM LOGIC ---
 function populateSelect() {
     const select = document.getElementById('vehicle-select');
+    // Save current selection if any
+    const currentVal = select.value;
+
     select.innerHTML = '<option value="">-- Seleccionar --</option>';
 
     sheets.forEach(sheet => {
         const option = document.createElement('option');
         option.value = sheet.name;
-        option.textContent = sheet.name;
-        // Mark as completed distinctively if needed?
+
+        let label = sheet.name;
+        if (completedSheets.has(sheet.name)) {
+            label += " (Completado)";
+        }
+        option.textContent = label;
         select.appendChild(option);
     });
+
+    if (currentVal) select.value = currentVal;
 }
 
 function loadVehicleForm() {
@@ -290,6 +310,21 @@ async function deleteLastRow(sheetName) {
 
         if (data.success) {
             alert("Última fila borrada correctamente.");
+
+            // Update completion status from server
+            if (data.completed !== undefined) {
+                if (data.completed) {
+                    completedSheets.add(sheetName);
+                } else {
+                    completedSheets.delete(sheetName);
+                }
+                updateProgress();
+                // Re-populate select to update the (Completed) text
+                populateSelect();
+                // Restore selection
+                document.getElementById('vehicle-select').value = sheetName;
+            }
+
         } else {
             alert("Error: " + data.error);
         }

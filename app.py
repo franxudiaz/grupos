@@ -35,9 +35,25 @@ def create_daily_backup():
         except Exception as e:
             print(f"Error creating backup: {e}")
 
+
+def get_sheet_type(sheet_name, df):
+    # Determine type based on columns or name
+    cols = [c.upper() for c in df.columns]
+    
+    if any('HORAS' in c for c in cols) or 'ACEITE' in cols:
+        return 'grupo'
+    elif 'PINES' in cols or 'RUEDAS' in cols or 'GANCHO' in cols:
+        return 'remolque'
+    else:
+        return 'grupo'
+
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
+
+# ... (skip to restore_backup) but I can't skip in one chunk easily if they are far apart.
+# I will do two separate edits to be safe.
+
 
 @app.route('/api/config')
 def get_config():
@@ -203,12 +219,7 @@ def restore_backup():
         return jsonify({"error": "Backup not found"}), 404
         
     try:
-        # Create a safety backup of the CURRENT bad state just in case?
-        # Maybe call it 'pre_restore_backup'
-        bad_state_backup = os.path.join(BACKUP_DIR, f"pre_restore_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx")
-        shutil.copy2(FILE_PATH, bad_state_backup)
-        
-        # Restore
+        # Restore (User requested NO safety backup made here)
         shutil.copy2(backup_path, FILE_PATH)
         return jsonify({"success": True})
     except Exception as e:

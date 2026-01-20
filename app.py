@@ -7,23 +7,33 @@ from datetime import datetime
 
 app = Flask(__name__, static_folder='public', static_url_path='')
 
+import shutil
+import glob
+
 # Use absolute path relative to this script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FILE_PATH = os.path.join(BASE_DIR, 'NOVEDADES SEMANALES VEHICULOS SECCION SISTEMAS.xlsx')
+BACKUP_DIR = os.path.join(BASE_DIR, 'backups')
 
-def get_sheet_type(sheet_name, df):
-    # Determine type based on columns or name
-    # Heuristic: Groups have 'ACEITE', Trailers have 'PINES' or similar?
-    # Let's look at the columns from the user request
-    cols = [c.upper() for c in df.columns]
+if not os.path.exists(BACKUP_DIR):
+    os.makedirs(BACKUP_DIR)
+
+def create_daily_backup():
+    """Creates a backup of the current Excel file if one doesn't exist for today."""
+    if not os.path.exists(FILE_PATH):
+        return
+        
+    today = datetime.now().strftime('%Y-%m-%d')
+    backup_filename = f"backup_{today}.xlsx"
+    backup_path = os.path.join(BACKUP_DIR, backup_filename)
     
-    if any('HORAS' in c for c in cols) or 'ACEITE' in cols:
-        return 'grupo'
-    elif 'PINES' in cols or 'RUEDAS' in cols or 'GANCHO' in cols:
-        return 'remolque'
-    else:
-        # Default fallback, maybe check sheet name
-        return 'grupo'
+    # Only create if it doesn't exist (snapshot of the start of the day)
+    if not os.path.exists(backup_path):
+        try:
+            shutil.copy2(FILE_PATH, backup_path)
+            print(f"Backup created: {backup_path}")
+        except Exception as e:
+            print(f"Error creating backup: {e}")
 
 @app.route('/')
 def index():
@@ -52,6 +62,9 @@ def get_config():
 
 @app.route('/api/submit', methods=['POST'])
 def submit_review():
+    # 1. Ensure we have a backup before modifying
+    create_daily_backup()
+
     data = request.json
     sheet_name = data.get('sheetName')
     form_data = data.get('formData')
@@ -128,6 +141,9 @@ def submit_review():
 
 @app.route('/api/delete_last', methods=['POST'])
 def delete_last_row():
+    # 1. Ensure we have a backup before modifying
+    create_daily_backup()
+
     data = request.json
     sheet_name = data.get('sheetName')
     
@@ -156,6 +172,47 @@ def download_file():
     if not os.path.exists(FILE_PATH):
         return jsonify({"error": "File not found"}), 404
     return send_file(FILE_PATH, as_attachment=True)
+
+# --- BACKUP ENDPOINTS ---
+
+@app.route('/api/backups', methods=['GET'])
+def list_backups():
+    files = glob.glob(os.path.join(BACKUP_DIR, '*.xlsx'))
+    # Sort by creation time (newest first)
+    files.sort(key=os.path.getmtime, reverse=True)
+    
+    backup_list = []
+    for f in files:
+        name = os.path.basename(f)
+        timestamp = os.path.getmtime(f)
+        date_str = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+        backup_list.append({"name": name, "date": date_str})
+        
+    return jsonify({"backups": backup_list})
+
+@app.route('/api/restore', methods=['POST'])
+def restore_backup():
+    data = request.json
+    backup_name = data.get('backupName')
+    
+    if not backup_name:
+        return jsonify({"error": "Missing backup name"}), 400
+        
+    backup_path = os.path.join(BACKUP_DIR, backup_name)
+    if not os.path.exists(backup_path):
+        return jsonify({"error": "Backup not found"}), 404
+        
+    try:
+        # Create a safety backup of the CURRENT bad state just in case?
+        # Maybe call it 'pre_restore_backup'
+        bad_state_backup = os.path.join(BACKUP_DIR, f"pre_restore_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx")
+        shutil.copy2(FILE_PATH, bad_state_backup)
+        
+        # Restore
+        shutil.copy2(backup_path, FILE_PATH)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

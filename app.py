@@ -95,10 +95,30 @@ def submit_review():
             # Use empty string if None to avoid literal "None" in excel
             if val is None:
                 val = ""
+            elif isinstance(val, str):
+                val = val.upper()
                 
             new_row.append(val)
             
         ws.append(new_row)
+        
+        # Apply Styling to the new row
+        from openpyxl.styles import Alignment, Border, Side
+        
+        thin_border = Border(left=Side(style='thin'), 
+                             right=Side(style='thin'), 
+                             top=Side(style='thin'), 
+                             bottom=Side(style='thin'))
+                             
+        center_alignment = Alignment(horizontal='center', vertical='center')
+        
+        # The new row index is ws.max_row
+        row_idx = ws.max_row
+        for col_idx in range(1, len(new_row) + 1):
+            cell = ws.cell(row=row_idx, column=col_idx)
+            cell.alignment = center_alignment
+            cell.border = thin_border
+
         wb.save(FILE_PATH)
         
         return jsonify({"success": True})

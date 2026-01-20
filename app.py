@@ -82,7 +82,7 @@ def submit_review():
             
             # Special logic for FECHA if not provided or auto
             if 'FECHA' in key:
-                val = datetime.now().strftime('%Y-%m-%d')
+                val = datetime.now().strftime('%d/%m/%Y')
             elif key in form_data:
                 val = form_data[key]
             else:
@@ -123,6 +123,31 @@ def submit_review():
         
         return jsonify({"success": True})
         
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/delete_last', methods=['POST'])
+def delete_last_row():
+    data = request.json
+    sheet_name = data.get('sheetName')
+    
+    if not sheet_name:
+        return jsonify({"error": "Missing sheet name"}), 400
+        
+    try:
+        wb = load_workbook(FILE_PATH)
+        if sheet_name not in wb.sheetnames:
+             return jsonify({"error": "Sheet not found"}), 404
+             
+        ws = wb[sheet_name]
+        
+        if ws.max_row > 1: # Assuming header is row 1, don't delete header
+            ws.delete_rows(ws.max_row)
+            wb.save(FILE_PATH)
+            return jsonify({"success": True, "message": "Última fila eliminada"})
+        else:
+            return jsonify({"error": "No hay filas para borrar (solo cabecera)"}), 400
+            
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

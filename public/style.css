@@ -13,6 +13,11 @@ body {
     margin: 0;
     padding: 20px;
     background-color: var(--bg-color);
+    /* Fallback */
+    background-image: url('background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     color: var(--text-color);
 }
 

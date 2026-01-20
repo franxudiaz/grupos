@@ -89,19 +89,30 @@ function loadVehicleForm() {
     // Build Form
     form.innerHTML = ''; // Clear previous
 
+    // BUTTON: Delete Last Row
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'btn btn-secondary';
+    deleteBtn.style.backgroundColor = '#ef4444'; // Red color
+    deleteBtn.style.color = 'white';
+    deleteBtn.style.marginBottom = '20px';
+    deleteBtn.textContent = 'Borrar última fila';
+    deleteBtn.onclick = () => deleteLastRow(sheetName);
+    form.appendChild(deleteBtn);
+
     // Common fields? No, specific per user request.
 
     if (currentSheetType === 'grupo') {
-        createField(form, 'Horas', 'number', 'HORAS', true);
+        createField(form, 'Horas', 'number', 'HORAS', false);
         createSelect(form, 'Aceite', 'ACEITE', ['Exceso', 'Bien', 'Poco', 'Vacío']);
         createSelect(form, 'Combustible', 'COMBUSTIBLE', ['Lleno', '3/4', '1/2', '1/4', 'Vacío']);
         createSelect(form, 'Pintura', 'PINTURA', ['OK', 'Mal']);
         createSelect(form, 'Piqueta', 'PIQUETA', ['OK', 'Mal']);
         createSelect(form, 'Extintor', 'EXTINTOR', ['OK', 'Mal']);
         createSelect(form, 'Ubicación', 'UBICACIÓN', ['Garaje', 'Escalón', 'ITV', 'Maniobras']);
-        createField(form, 'Próxima ITV', 'date', 'PROXIMA ITV', true);
+        createField(form, 'Próxima ITV', 'date', 'PROXIMA ITV', false);
         createField(form, 'Observaciones', 'textarea', 'OBSERVACIONES');
-        createField(form, 'Hecho Por', 'text', 'HECHO POR:', true);
+        createField(form, 'Hecho Por', 'text', 'HECHO POR:', false);
     } else {
         // Remolque
         createSelect(form, 'Pintura', 'PINTURA', ['OK', 'Mal']);
@@ -110,9 +121,9 @@ function loadVehicleForm() {
         createSelect(form, 'Gancho', 'GANCHO', ['OK', 'Mal']);
         createSelect(form, 'Calzos', 'CALZOS', ['Si', 'No']);
         createSelect(form, 'Ubicación', 'UBICACIÓN', ['Garaje', 'Escalón', 'ITV', 'Maniobras']);
-        createField(form, 'Próxima ITV', 'date', 'PROXIMA ITV', true);
+        createField(form, 'Próxima ITV', 'date', 'PROXIMA ITV', false);
         createField(form, 'Observaciones', 'textarea', 'OBSERVACIONES');
-        createField(form, 'Hecho Por', 'text', 'HECHO POR:', true);
+        createField(form, 'Hecho Por', 'text', 'HECHO POR:', false);
     }
 
     // Add Submit Button
@@ -251,6 +262,32 @@ function closeModalAndReset() {
     showMenu();
 }
 
+
 function downloadExcel() {
     window.location.href = '/api/download';
+}
+
+async function deleteLastRow(sheetName) {
+    if (!confirm(`¿Estás seguro de que quieres borrar la última fila de ${sheetName}?`)) return;
+
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    try {
+        const res = await fetch('/api/delete_last', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sheetName })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            alert("Última fila borrada correctamente.");
+        } else {
+            alert("Error: " + data.error);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error de conexión al borrar.");
+    } finally {
+        document.getElementById('loading-overlay').classList.add('hidden');
+    }
 }

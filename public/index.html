@@ -24,6 +24,10 @@
         <div id="view-menu" class="view active">
             <button class="btn btn-primary btn-large" onclick="startRevision()">Iniciar Revisión</button>
             <button class="btn btn-secondary btn-large" onclick="downloadExcel()">Descargar Excel</button>
+
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="#" onclick="showManual(event)" class="manual-link">📖 Manual de Usuario</a>
+            </div>
         </div>
 
         <!-- REVISION VIEW -->
@@ -56,6 +60,41 @@
             <h2>¡Revisión Completada!</h2>
             <p>Se han revisado todos los vehículos.</p>
             <button class="btn btn-primary" onclick="closeModalAndReset()">Aceptar</button>
+        </div>
+    </div>
+
+    <!-- MANUAL MODAL -->
+    <div id="manual-modal" class="modal hidden">
+        <div class="modal-content manual-content">
+            <button class="close-btn" onclick="closeManual()">×</button>
+            <h2>Manual de Usuario</h2>
+
+            <div class="manual-text">
+                <h3>1. Acceso a la Aplicación</h3>
+                <p>Abra su navegador y entre en la web. Verá el menú principal con el título "CIA 12".</p>
+
+                <h3>2. Realizar una Revisión</h3>
+                <p>Pulse el botón azul <b>"Iniciar Revisión"</b>.</p>
+                <ul>
+                    <li><b>Seleccionar Vehículo:</b> Elija un equipo del desplegable.</li>
+                    <li><b>Rellenar Datos:</b> Complete el formulario (la fecha es automática). No es obligatorio
+                        rellenar todo.</li>
+                    <li><b>Guardar:</b> Pulse "Aceptar y Guardar". El contador de completados subirá.</li>
+                </ul>
+
+                <h3>3. Corregir Errores (Borrar)</h3>
+                <p>Si se equivoca: Seleccione el mismo vehículo y pulse el botón rojo <b>"Borrar última fila"</b> para
+                    eliminar su último registro.</p>
+
+                <h3>4. Finalización</h3>
+                <p>Al completar todos los vehículos, verá un aviso de "¡Revisión Completada!".</p>
+
+                <h3>5. Descargar Excel</h3>
+                <p>En el Menú Principal, pulse el botón verde <b>"Descargar Excel"</b> para bajar el archivo
+                    actualizado.</p>
+            </div>
+
+            <button class="btn btn-primary" onclick="closeManual()" style="margin-top: 20px;">Cerrar</button>
         </div>
     </div>
 

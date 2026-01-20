@@ -267,6 +267,15 @@ function downloadExcel() {
     window.location.href = '/api/download';
 }
 
+function showManual(e) {
+    if (e) e.preventDefault();
+    document.getElementById('manual-modal').classList.remove('hidden');
+}
+
+function closeManual() {
+    document.getElementById('manual-modal').classList.add('hidden');
+}
+
 async function deleteLastRow(sheetName) {
     if (!confirm(`¿Estás seguro de que quieres borrar la última fila de ${sheetName}?`)) return;
 

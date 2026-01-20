@@ -7,7 +7,9 @@ from datetime import datetime
 
 app = Flask(__name__, static_folder='public', static_url_path='')
 
-FILE_PATH = 'NOVEDADES SEMANALES VEHICULOS SECCION SISTEMAS.xlsx'
+# Use absolute path relative to this script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FILE_PATH = os.path.join(BASE_DIR, 'NOVEDADES SEMANALES VEHICULOS SECCION SISTEMAS.xlsx')
 
 def get_sheet_type(sheet_name, df):
     # Determine type based on columns or name
